@@ -157,7 +157,15 @@ struct VariadicList[type: AnyTrivialRegType](Sized):
         Returns:
             The element on the list corresponding to the given index.
         """
-        return __mlir_op.`pop.variadic.get`(self.value, idx.value)
+        var normalized_idx = idx
+        debug_assert(
+            -self.__len__() <= normalized_idx < self.__len__(),
+            "index must be within bounds",
+        )
+        if normalized_idx < 0:
+            normalized_idx += self.__len__()
+
+        return __mlir_op.`pop.variadic.get`(self.value, normalized_idx.value)
 
     @always_inline
     fn __iter__(self) -> Self.IterType:
