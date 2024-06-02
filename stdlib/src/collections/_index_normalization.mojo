@@ -76,3 +76,23 @@ fn normalize_index[
                 )
             )
     return idx + int(idx < 0) * container_length
+
+
+@parameter
+fn normalize_index[
+    container_name: StringLiteral, idx: Int, container_length: Int
+]() -> Int:
+
+    # var container_length = len(container)
+    if not (-container_length <= idx < container_length):
+
+        @parameter
+        if triple_is_nvidia_cuda():
+            abort()
+        else:
+            abort(
+                get_out_of_bounds_error_message[container_name](
+                    idx, container_length
+                )
+            )
+    return idx + int(idx < 0) * container_length

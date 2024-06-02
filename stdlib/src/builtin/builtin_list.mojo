@@ -17,7 +17,7 @@ These are Mojo built-ins, so you don't need to import them.
 
 from memory import Reference, UnsafePointer, LegacyPointer
 from memory.unsafe_pointer import destroy_pointee
-
+from collections._index_normalization import normalize_index
 # ===----------------------------------------------------------------------===#
 # ListLiteral
 # ===----------------------------------------------------------------------===#
@@ -157,7 +157,8 @@ struct VariadicList[type: AnyTrivialRegType](Sized):
         Returns:
             The element on the list corresponding to the given index.
         """
-        return __mlir_op.`pop.variadic.get`(self.value, idx.value)
+        var normalized_index = normalize_index["VariadicList"](idx, self)
+        return __mlir_op.`pop.variadic.get`(self.value, normalized_index.value)
 
     @always_inline
     fn __iter__(self) -> Self.IterType:
@@ -357,6 +358,8 @@ struct VariadicListMem[
             The number of elements on the variadic list.
         """
         return __mlir_op.`pop.variadic.size`(self.value)
+    
+
 
     @always_inline
     fn __getitem__(
@@ -382,8 +385,9 @@ struct VariadicListMem[
             A low-level pointer to the element on the list corresponding to the
             given index.
         """
+        var normalized_index = normalize_index["VariadicListMem"](idx, self)
         return __get_litref_as_mvalue(
-            __mlir_op.`pop.variadic.get`(self.value, idx.value)
+            __mlir_op.`pop.variadic.get`(self.value, normalized_index.value)
         )
 
     fn __iter__(
@@ -511,6 +515,7 @@ struct VariadicPack[
         `>`,
     ]
 
+    # alias paramater_normalized_index = normalize_index["VariadicPack", idx = index, container_length = Self.__len__()]()
     var _value: Self._mlir_type
     var _is_owned: Bool
 
@@ -575,10 +580,17 @@ struct VariadicPack[
         """
         return Self.__len__()
 
+    # @parameter
+    # fn parameter_index_normalize[idx: Int, container_length: Int]() -> Int:
+    #     return idx + int(idx < 0) * container_length
+    
+    # alias parameter_index_normalized = parameter_index_normalize
+
     @always_inline
     fn __getitem__[
         index: Int
     ](self) -> ref [Self.lifetime] element_types[index.value]:
+    # ](self) -> ref [Self.lifetime] element_types[index.value]:
         """Return a reference to an element of the pack.
 
         Parameters:
